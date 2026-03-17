@@ -465,7 +465,7 @@ function formatRupiah($n) {
 </main>
 
 <footer>
-  RentWheels API &mdash; Tugas Pemrograman Web &copy; <?= date('Y') ?>
+  RentWheels API &mdash; Tugas Integrasi Data &copy; <?= date('Y') ?>
 </footer>
 
 </body>
