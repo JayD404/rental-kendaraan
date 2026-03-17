@@ -2,10 +2,10 @@
 // config/database.php
 // Ganti nilai di bawah ini dengan kredensial Supabase kamu
 
-define('DB_HOST', 'db.qknthjqazdjyyyhrlpwv.supabase.co'); // Host dari Supabase
-define('DB_PORT', '5432');
+define('DB_HOST', 'aws-1-ap-southeast-1.pooler.supabase.com'); // Host dari Supabase
+define('DB_PORT', '6543');
 define('DB_NAME', 'postgres');
-define('DB_USER', 'postgres');   // Ganti dengan user Supabase kamu
+define('DB_USER', 'postgres.qknthjqazdjyyyhrlpwv');   // Ganti dengan user Supabase kamu
 define('DB_PASS', 'eBZ6shRyD2x&ei*');          // Ganti dengan password Supabase kamu
 
 function getConnection() {
