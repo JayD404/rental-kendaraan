@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dokumentasi API — Rental Kendaraan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14; --surface: #151820; --surface2: #1c2030;
+    --border: #252a3a; --accent: #f4b942; --green: #3ecf8e;
+    --red: #e85c5c; --blue: #5c9ee8; --text: #e8eaf0; --muted: #6b7491;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; font-size:15px; }
+
+  .container { max-width: 900px; margin: 0 auto; padding: 60px 32px 100px; }
+
+  h1 {
+    font-family:'Syne',sans-serif; font-size:40px; font-weight:800;
+    letter-spacing:-1.5px; line-height:1.1; margin-bottom:12px;
+  }
+  h1 span { color:var(--accent); }
+
+  .subtitle { color:var(--muted); font-size:15px; margin-bottom:48px; }
+
+  h2 {
+    font-family:'Syne',sans-serif; font-size:20px; font-weight:700;
+    margin: 40px 0 14px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 {
+    font-family:'Syne',sans-serif; font-size:16px; font-weight:700;
+    margin: 28px 0 10px; color: var(--accent);
+  }
+
+  p { color:var(--muted); line-height:1.7; margin-bottom:12px; }
+
+  /* BASE URL */
+  .base-url {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius:8px;
+    padding:14px 18px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--text);
+    margin-bottom:32px;
+    word-break:break-all;
+  }
+
+  /* ENDPOINT TABLE */
+  .endpoint-table {
+    width:100%; border-collapse:collapse;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    overflow:hidden;
+    margin-bottom:32px;
+    font-size:14px;
+  }
+  .endpoint-table thead th {
+    padding:12px 16px;
+    text-align:left;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.8px;
+    color:var(--muted);
+    background:var(--surface2);
+    border-bottom:1px solid var(--border);
+  }
+  .endpoint-table tbody td {
+    padding:12px 16px;
+    border-bottom:1px solid var(--border);
+  }
+  .endpoint-table tbody tr:last-child td { border-bottom:none; }
+  .endpoint-table tbody tr:hover td { background:var(--surface2); }
+
+  .method {
+    display:inline-block; padding:3px 9px; border-radius:5px;
+    font-family:'Syne',sans-serif; font-weight:700; font-size:11px; min-width:54px; text-align:center;
+  }
+  .get    { background:rgba(62,207,142,.15); color:var(--green);  border:1px solid rgba(62,207,142,.25); }
+  .post   { background:rgba(92,158,232,.15); color:var(--blue);   border:1px solid rgba(92,158,232,.25); }
+  .put    { background:rgba(244,185,66,.15); color:var(--accent); border:1px solid rgba(244,185,66,.25); }
+  .delete { background:rgba(232,92,92,.15);  color:var(--red);    border:1px solid rgba(232,92,92,.25); }
+
+  code {
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--text);
+    background:var(--surface2);
+    padding:2px 7px;
+    border-radius:4px;
+  }
+
+  /* JSON BLOCK */
+  pre {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:20px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;
+    line-height:1.7;
+    overflow-x:auto;
+    color:#c9d1d9;
+    margin-bottom:24px;
+  }
+  .json-key    { color:#79c0ff; }
+  .json-str    { color:#a5d6a7; }
+  .json-num    { color:#f4b942; }
+  .json-bool   { color:#e85c5c; }
+  .json-null   { color:#6b7491; }
+
+  /* REQUEST BODY */
+  .req-body {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-left:3px solid var(--blue);
+    border-radius:8px;
+    padding:16px 20px;
+    margin-bottom:20px;
+  }
+  .req-body h4 { font-size:12px; text-transform:uppercase; letter-spacing:.8px; color:var(--blue); margin-bottom:10px; }
+  .field-row { display:flex; gap:12px; align-items:center; padding:6px 0; border-bottom:1px solid var(--border); font-size:13px; }
+  .field-row:last-child { border-bottom:none; }
+  .field-name { color:var(--text); font-family:'JetBrains Mono',monospace; min-width:160px; }
+  .field-type { color:var(--accent); font-size:11px; min-width:70px; }
+  .field-req  { color:var(--red); font-size:11px; }
+  .field-opt  { color:var(--muted); font-size:11px; }
+  .field-desc { color:var(--muted); font-size:12px; }
+
+  /* NAV */
+  .topnav {
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+    padding:0 40px; height:60px;
+    display:flex; align-items:center; justify-content:space-between;
+    position:sticky; top:0; z-index:100;
+  }
+  .topnav .logo { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; }
+  .topnav .logo span { color:var(--accent); }
+  .toc { display:flex; gap:24px; }
+  .toc a { color:var(--muted); font-size:13px; text-decoration:none; transition:color .2s; }
+  .toc a:hover { color:var(--accent); }
+
+  .tag {
+    display:inline-block; padding:2px 9px; border-radius:99px;
+    font-size:11px; background:var(--surface2); border:1px solid var(--border); color:var(--muted);
+    margin-bottom:6px;
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="logo">Rent<span>Wheels</span> <span style="font-size:13px;color:var(--muted);font-family:'DM Sans',sans-serif;font-weight:400">API Docs</span></div>
+  <div class="toc">
+    <a href="#pelanggan">Pelanggan</a>
+    <a href="#kendaraan">Kendaraan</a>
+    <a href="#transaksi">Transaksi</a>
+  </div>
+</nav>
+
+<div class="container">
+
+  <h1>Dokumentasi <span>API</span><br>Rental Kendaraan</h1>
+  <p class="subtitle">REST API untuk sistem manajemen rental kendaraan. Mendukung metode <strong>GET, POST, PUT, DELETE</strong>. Tidak memerlukan API Key.</p>
+
+  <h2>⚡ Base URL</h2>
+  <div class="base-url">https://nama-project-anda.vercel.app</div>
+
+  <p>Semua response menggunakan format JSON dengan struktur:</p>
+  <pre><code><span class="json-key">"meta"</span>: { <span class="json-key">"status"</span>: <span class="json-num">200</span>, <span class="json-key">"message"</span>: <span class="json-str">"..."</span>, <span class="json-key">"timestamp"</span>: <span class="json-str">"2025-03-17T..."</span> },
+<span class="json-key">"data"</span>: { ... }</code></pre>
+
+  <!-- ══════════════════════════════════════ PELANGGAN -->
+  <h2 id="pelanggan">👥 Pelanggan</h2>
+
+  <table class="endpoint-table">
+    <thead><tr><th>Method</th><th>Endpoint</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td><span class="method get">GET</span></td><td><code>/api/pelanggan.php</code></td><td>Ambil semua pelanggan</td></tr>
+      <tr><td><span class="method get">GET</span></td><td><code>/api/pelanggan.php?id=1</code></td><td>Ambil pelanggan by ID</td></tr>
+      <tr><td><span class="method post">POST</span></td><td><code>/api/pelanggan.php</code></td><td>Tambah pelanggan baru</td></tr>
+      <tr><td><span class="method put">PUT</span></td><td><code>/api/pelanggan.php?id=1</code></td><td>Update pelanggan by ID</td></tr>
+      <tr><td><span class="method delete">DELETE</span></td><td><code>/api/pelanggan.php?id=1</code></td><td>Hapus pelanggan by ID</td></tr>
+    </tbody>
+  </table>
+
+  <h3>POST / PUT — Request Body</h3>
+  <div class="req-body">
+    <h4>Request Body (JSON)</h4>
+    <div class="field-row"><span class="field-name">nama</span><span class="field-type">string</span><span class="field-req">wajib (POST)</span><span class="field-desc">Nama lengkap pelanggan</span></div>
+    <div class="field-row"><span class="field-name">nik</span><span class="field-type">string</span><span class="field-req">wajib (POST)</span><span class="field-desc">Nomor Induk Kependudukan (16 digit)</span></div>
+    <div class="field-row"><span class="field-name">no_hp</span><span class="field-type">string</span><span class="field-req">wajib (POST)</span><span class="field-desc">Nomor handphone pelanggan</span></div>
+    <div class="field-row"><span class="field-name">alamat</span><span class="field-type">string</span><span class="field-req">wajib (POST)</span><span class="field-desc">Alamat lengkap pelanggan</span></div>
+    <div class="field-row"><span class="field-name">email</span><span class="field-type">string</span><span class="field-opt">opsional</span><span class="field-desc">Alamat email pelanggan</span></div>
+  </div>
+
+  <h3>GET /api/pelanggan.php — Response</h3>
+  <pre>{
+  <span class="json-key">"meta"</span>: {
+    <span class="json-key">"status"</span>: <span class="json-num">200</span>,
+    <span class="json-key">"message"</span>: <span class="json-str">"Daftar semua pelanggan"</span>,
+    <span class="json-key">"timestamp"</span>: <span class="json-str">"2025-03-17T10:00:00+08:00"</span>
+  },
+  <span class="json-key">"data"</span>: [
+    {
+      <span class="json-key">"id_pelanggan"</span>: <span class="json-num">1</span>,
+      <span class="json-key">"nama"</span>: <span class="json-str">"Budi Santoso"</span>,
+      <span class="json-key">"nik"</span>: <span class="json-str">"7371010101800001"</span>,
+      <span class="json-key">"no_hp"</span>: <span class="json-str">"081234567890"</span>,
+      <span class="json-key">"alamat"</span>: <span class="json-str">"Jl. Veteran No. 12, Makassar"</span>,
+      <span class="json-key">"email"</span>: <span class="json-str">"budi.santoso@gmail.com"</span>,
+      <span class="json-key">"created_at"</span>: <span class="json-str">"2025-03-17T10:00:00"</span>
+    },
+    <span class="json-null">// ... data lainnya</span>
+  ]
+}</pre>
+
+  <!-- ══════════════════════════════════════ KENDARAAN -->
+  <h2 id="kendaraan">🚗 Kendaraan</h2>
+
+  <table class="endpoint-table">
+    <thead><tr><th>Method</th><th>Endpoint</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td><span class="method get">GET</span></td><td><code>/api/kendaraan.php</code></td><td>Ambil semua kendaraan</td></tr>
+      <tr><td><span class="method get">GET</span></td><td><code>/api/kendaraan.php?id=1</code></td><td>Ambil kendaraan by ID</td></tr>
+      <tr><td><span class="method get">GET</span></td><td><code>/api/kendaraan.php?status=tersedia</code></td><td>Filter by status (tersedia/disewa/perawatan)</td></tr>
+      <tr><td><span class="method post">POST</span></td><td><code>/api/kendaraan.php</code></td><td>Tambah kendaraan baru</td></tr>
+      <tr><td><span class="method put">PUT</span></td><td><code>/api/kendaraan.php?id=1</code></td><td>Update kendaraan by ID</td></tr>
+      <tr><td><span class="method delete">DELETE</span></td><td><code>/api/kendaraan.php?id=1</code></td><td>Hapus kendaraan by ID</td></tr>
+    </tbody>
+  </table>
+
+  <h3>POST / PUT — Request Body</h3>
+  <div class="req-body">
+    <h4>Request Body (JSON)</h4>
+    <div class="field-row"><span class="field-name">nama_kendaraan</span><span class="field-type">string</span><span class="field-req">wajib (POST)</span><span class="field-desc">Nama / tipe kendaraan</span></div>
+    <div class="field-row"><span class="field-name">jenis</span><span class="field-type">string</span><span class="field-req">wajib (POST)</span><span class="field-desc">mobil / motor</span></div>
+    <div class="field-row"><span class="field-name">merek</span><span class="field-type">string</span><span class="field-req">wajib (POST)</span><span class="field-desc">Merek kendaraan (Toyota, Honda, dll)</span></div>
+    <div class="field-row"><span class="field-name">plat_nomor</span><span class="field-type">string</span><span class="field-req">wajib (POST)</span><span class="field-desc">Nomor plat kendaraan (unik)</span></div>
+    <div class="field-row"><span class="field-name">tahun</span><span class="field-type">integer</span><span class="field-req">wajib (POST)</span><span class="field-desc">Tahun produksi kendaraan</span></div>
+    <div class="field-row"><span class="field-name">harga_sewa</span><span class="field-type">integer</span><span class="field-req">wajib (POST)</span><span class="field-desc">Harga sewa per hari (rupiah)</span></div>
+    <div class="field-row"><span class="field-name">status</span><span class="field-type">string</span><span class="field-opt">opsional</span><span class="field-desc">tersedia / disewa / perawatan (default: tersedia)</span></div>
+  </div>
+
+  <h3>GET /api/kendaraan.php — Response</h3>
+  <pre>{
+  <span class="json-key">"meta"</span>: { <span class="json-key">"status"</span>: <span class="json-num">200</span>, <span class="json-key">"message"</span>: <span class="json-str">"Daftar semua kendaraan"</span>, <span class="json-key">"timestamp"</span>: <span class="json-str">"..."</span> },
+  <span class="json-key">"data"</span>: [
+    {
+      <span class="json-key">"id_kendaraan"</span>: <span class="json-num">1</span>,
+      <span class="json-key">"nama_kendaraan"</span>: <span class="json-str">"Avanza G"</span>,
+      <span class="json-key">"jenis"</span>: <span class="json-str">"mobil"</span>,
+      <span class="json-key">"merek"</span>: <span class="json-str">"Toyota"</span>,
+      <span class="json-key">"plat_nomor"</span>: <span class="json-str">"DD 1234 AA"</span>,
+      <span class="json-key">"tahun"</span>: <span class="json-num">2021</span>,
+      <span class="json-key">"harga_sewa"</span>: <span class="json-num">350000</span>,
+      <span class="json-key">"status"</span>: <span class="json-str">"tersedia"</span>
+    }
+  ]
+}</pre>
+
+  <!-- ══════════════════════════════════════ TRANSAKSI -->
+  <h2 id="transaksi">📋 Transaksi</h2>
+
+  <table class="endpoint-table">
+    <thead><tr><th>Method</th><th>Endpoint</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td><span class="method get">GET</span></td><td><code>/api/transaksi.php</code></td><td>Ambil semua transaksi (dengan data JOIN)</td></tr>
+      <tr><td><span class="method get">GET</span></td><td><code>/api/transaksi.php?id=1</code></td><td>Ambil transaksi by ID</td></tr>
+      <tr><td><span class="method get">GET</span></td><td><code>/api/transaksi.php?id_pelanggan=2</code></td><td>Transaksi by ID pelanggan</td></tr>
+      <tr><td><span class="method post">POST</span></td><td><code>/api/transaksi.php</code></td><td>Buat transaksi baru (auto hitung total)</td></tr>
+      <tr><td><span class="method put">PUT</span></td><td><code>/api/transaksi.php?id=1</code></td><td>Update transaksi by ID</td></tr>
+      <tr><td><span class="method delete">DELETE</span></td><td><code>/api/transaksi.php?id=1</code></td><td>Hapus transaksi by ID</td></tr>
+    </tbody>
+  </table>
+
+  <h3>POST — Request Body</h3>
+  <div class="req-body">
+    <h4>Request Body (JSON)</h4>
+    <div class="field-row"><span class="field-name">id_pelanggan</span><span class="field-type">integer</span><span class="field-req">wajib</span><span class="field-desc">ID pelanggan yang menyewa</span></div>
+    <div class="field-row"><span class="field-name">id_kendaraan</span><span class="field-type">integer</span><span class="field-req">wajib</span><span class="field-desc">ID kendaraan yang disewa</span></div>
+    <div class="field-row"><span class="field-name">tanggal_sewa</span><span class="field-type">string</span><span class="field-req">wajib</span><span class="field-desc">Format: YYYY-MM-DD</span></div>
+    <div class="field-row"><span class="field-name">tanggal_kembali</span><span class="field-type">string</span><span class="field-req">wajib</span><span class="field-desc">Format: YYYY-MM-DD</span></div>
+    <div class="field-row"><span class="field-name">status_bayar</span><span class="field-type">string</span><span class="field-opt">opsional</span><span class="field-desc">lunas / belum lunas (default: belum lunas)</span></div>
+  </div>
+  <p style="font-size:13px;color:var(--green)">✅ <strong>durasi_hari</strong> dan <strong>total_bayar</strong> dihitung otomatis oleh server.</p>
+  <p style="font-size:13px;color:var(--accent)">⚡ Status kendaraan otomatis berubah menjadi <strong>"disewa"</strong> saat transaksi dibuat, dan kembali <strong>"tersedia"</strong> saat dihapus.</p>
+
+  <h3>GET /api/transaksi.php — Response (dengan JOIN)</h3>
+  <pre>{
+  <span class="json-key">"meta"</span>: { <span class="json-key">"status"</span>: <span class="json-num">200</span>, <span class="json-key">"message"</span>: <span class="json-str">"Daftar semua transaksi"</span>, <span class="json-key">"timestamp"</span>: <span class="json-str">"..."</span> },
+  <span class="json-key">"data"</span>: [
+    {
+      <span class="json-key">"id_transaksi"</span>:   <span class="json-num">1</span>,
+      <span class="json-key">"tanggal_sewa"</span>:   <span class="json-str">"2025-03-01"</span>,
+      <span class="json-key">"tanggal_kembali"</span>:<span class="json-str">"2025-03-03"</span>,
+      <span class="json-key">"durasi_hari"</span>:    <span class="json-num">2</span>,
+      <span class="json-key">"total_bayar"</span>:    <span class="json-num">700000</span>,
+      <span class="json-key">"status_bayar"</span>:   <span class="json-str">"lunas"</span>,
+      <span class="json-key">"id_pelanggan"</span>:   <span class="json-num">1</span>,
+      <span class="json-key">"nama_pelanggan"</span>: <span class="json-str">"Budi Santoso"</span>,
+      <span class="json-key">"id_kendaraan"</span>:   <span class="json-num">1</span>,
+      <span class="json-key">"nama_kendaraan"</span>: <span class="json-str">"Avanza G"</span>,
+      <span class="json-key">"plat_nomor"</span>:     <span class="json-str">"DD 1234 AA"</span>,
+      <span class="json-key">"harga_sewa"</span>:     <span class="json-num">350000</span>
+    }
+  ]
+}</pre>
+
+  <!-- HTTP Status Codes -->
+  <h2>📊 HTTP Status Codes</h2>
+  <table class="endpoint-table">
+    <thead><tr><th>Status</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td><code style="color:var(--green)">200 OK</code></td><td>Request berhasil</td></tr>
+      <tr><td><code style="color:var(--blue)">201 Created</code></td><td>Data berhasil ditambahkan</td></tr>
+      <tr><td><code style="color:var(--red)">400 Bad Request</code></td><td>Field wajib tidak lengkap</td></tr>
+      <tr><td><code style="color:var(--red)">404 Not Found</code></td><td>Data dengan ID tersebut tidak ditemukan</td></tr>
+      <tr><td><code style="color:var(--accent)">405 Method Not Allowed</code></td><td>HTTP method tidak didukung</td></tr>
+      <tr><td><code style="color:var(--accent)">409 Conflict</code></td><td>Kendaraan tidak tersedia / konflik data</td></tr>
+      <tr><td><code style="color:var(--red)">500 Internal Server Error</code></td><td>Kesalahan server / koneksi database</td></tr>
+    </tbody>
+  </table>
+
+</div>
+</body>
+</html>
