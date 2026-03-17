@@ -1,8 +1,7 @@
 <?php
 // index.php - Halaman utama dashboard Rental Kendaraan
 // Data diambil dari API sendiri secara server-side
-require_once 'config/database.php';
-
+require_once '../config/database.php';
 $pdo = getConnection();
 
 // Statistik ringkas
