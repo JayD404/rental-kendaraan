@@ -3,15 +3,12 @@
   "functions": {
     "api/*.php": {
       "runtime": "vercel-php@0.7.2"
-    },
-    "index.php": {
-      "runtime": "vercel-php@0.7.2"
     }
   },
   "routes": [
-    { "src": "/api/pelanggan",  "dest": "/api/pelanggan.php"  },
-    { "src": "/api/kendaraan",  "dest": "/api/kendaraan.php"  },
-    { "src": "/api/transaksi",  "dest": "/api/transaksi.php"  },
-    { "src": "/",               "dest": "/index.php"          }
+    { "src": "/api/pelanggan", "dest": "/api/pelanggan.php" },
+    { "src": "/api/kendaraan", "dest": "/api/kendaraan.php" },
+    { "src": "/api/transaksi", "dest": "/api/transaksi.php" },
+    { "src": "/", "dest": "/api/index.php" }
   ]
 }
