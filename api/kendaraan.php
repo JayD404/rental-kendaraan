@@ -1,8 +1,8 @@
 <?php
 // api/kendaraan.php
 
-require_once '../config/database.php';
-require_once '../config/response.php';
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/response.php';
 
 setCORSHeaders();
 
