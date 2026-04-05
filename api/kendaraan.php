@@ -1,87 +1,59 @@
 <?php
 // api/kendaraan.php
-require_once '../config/database.php';
-require_once '../config/response.php';
-require_once '../config/supabase.php';
+
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/response.php';
+require_once __DIR__ . '/../config/supabase.php'; // ← tambahan untuk upload file
 
 setCORSHeaders();
+
 $method = $_SERVER['REQUEST_METHOD'];
 $pdo    = getConnection();
 $id     = isset($_GET['id']) ? (int)$_GET['id'] : null;
 
-// ─────────────────────────────────────────────
-// Helper: Upload file ke Supabase Storage via base64
-// ─────────────────────────────────────────────
-function uploadToSupabase($fileInput, $allowedMimes, $folder) {
-    if (!isset($_FILES[$fileInput]) || $_FILES[$fileInput]['error'] !== UPLOAD_ERR_OK) {
-        return null;
+// ─────────────────────────────────────────────────────────
+// Helper: proses upload file dari $_FILES ke Supabase
+// Mengembalikan public URL atau null jika tidak ada file
+// ─────────────────────────────────────────────────────────
+function handleFileUpload(string $fieldName, string $prefix): ?string {
+    if (empty($_FILES[$fieldName]['tmp_name'])) {
+        return null; // tidak ada file yang dikirim, skip
     }
 
-    $file     = $_FILES[$fileInput];
-    $mimeType = mime_content_type($file['tmp_name']);
+    $file     = $_FILES[$fieldName];
+    $tmpPath  = $file['tmp_name'];
+    $origName = $file['name'];
+    $mimeType = $file['type'];
+    $error    = $file['error'];
 
-    if (!in_array($mimeType, $allowedMimes)) {
-        sendResponse(400, "Tipe file '$fileInput' tidak diizinkan. Allowed: " . implode(', ', $allowedMimes));
+    if ($error !== UPLOAD_ERR_OK) {
+        sendResponse(400, "Error upload file '$fieldName' (kode: $error)");
     }
 
-    // Baca file -> encode base64 -> decode kembali ke binary untuk upload
-    $rawContent = file_get_contents($file['tmp_name']);
-    $base64     = base64_encode($rawContent);
-    $binary     = base64_decode($base64);
+    // Validasi ekstensi untuk keamanan
+    $ext           = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+    $allowedGambar = ['jpg', 'jpeg', 'png', 'webp'];
+    $allowedFile   = ['pdf'];
 
-    // Generate nama file unik
-    $ext      = pathinfo($file['name'], PATHINFO_EXTENSION);
-    $filename = $folder . '/' . $folder . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
-
-    // Upload ke Supabase Storage via REST API
-    $url = SUPABASE_URL . '/storage/v1/object/' . SUPABASE_BUCKET . '/' . $filename;
-
-    $ch = curl_init();
-    curl_setopt_array($ch, [
-        CURLOPT_URL            => $url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_CUSTOMREQUEST  => 'POST',
-        CURLOPT_POSTFIELDS     => $binary,
-        CURLOPT_HTTPHEADER     => [
-            'Authorization: Bearer ' . SUPABASE_KEY,
-            'Content-Type: ' . $mimeType,
-            'x-upsert: true'
-        ]
-    ]);
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if ($httpCode !== 200) {
-        sendResponse(500, "Gagal upload '$fileInput' ke Supabase Storage: " . $response);
+    if ($prefix === 'gambar' && !in_array($ext, $allowedGambar)) {
+        sendResponse(400, "Format gambar tidak didukung. Gunakan: jpg, jpeg, png, webp");
+    }
+    if ($prefix === 'file' && !in_array($ext, $allowedFile)) {
+        sendResponse(400, "Format file tidak didukung. Gunakan: pdf");
     }
 
-    return SUPABASE_URL . '/storage/v1/object/public/' . SUPABASE_BUCKET . '/' . $filename;
-}
+    // Buat nama file unik supaya tidak tabrakan di bucket
+    $fileName = $prefix . '_' . time() . '_' . uniqid() . '.' . $ext;
 
-// ─────────────────────────────────────────────
-// Helper: Hapus file dari Supabase Storage
-// ─────────────────────────────────────────────
-function deleteFromSupabase($publicUrl) {
-    if (!$publicUrl) return;
+    // Baca binary content lalu upload
+    $fileData = file_get_contents($tmpPath);
+    $result   = uploadToSupabase($fileData, $fileName, $mimeType);
 
-    $prefix = SUPABASE_URL . '/storage/v1/object/public/' . SUPABASE_BUCKET . '/';
-    if (strpos($publicUrl, $prefix) !== 0) return;
+    if (isset($result['error'])) {
+        sendResponse(500, "Gagal upload $prefix: " . $result['error']);
+    }
 
-    $filePath = substr($publicUrl, strlen($prefix));
-    $url = SUPABASE_URL . '/storage/v1/object/' . SUPABASE_BUCKET . '/' . $filePath;
-
-    $ch = curl_init();
-    curl_setopt_array($ch, [
-        CURLOPT_URL            => $url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_CUSTOMREQUEST  => 'DELETE',
-        CURLOPT_HTTPHEADER     => [
-            'Authorization: Bearer ' . SUPABASE_KEY,
-        ]
-    ]);
-    curl_exec($ch);
-    curl_close($ch);
+    return $result['url'];
 }
 
 switch ($method) {
@@ -114,15 +86,18 @@ switch ($method) {
         break;
 
     // ─────────────────────────────────────────────
-    // POST: Tambah kendaraan baru (form-data atau JSON)
+    // POST: Tambah kendaraan baru
+    //       Mendukung multipart/form-data (Postman)
+    //       Field file: 'gambar' (jpg/png) dan 'file' (pdf)
     // ─────────────────────────────────────────────
     case 'POST':
+        // form-data dari Postman → pakai $_POST
+        // JSON body → pakai php://input
         $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-
         if (strpos($contentType, 'multipart/form-data') !== false) {
             $input = $_POST;
         } else {
-            $input = json_decode(file_get_contents("php://input"), true);
+            $input = json_decode(file_get_contents("php://input"), true) ?? [];
         }
 
         $required = ['nama_kendaraan', 'jenis', 'merek', 'plat_nomor', 'tahun', 'harga_sewa'];
@@ -132,19 +107,12 @@ switch ($method) {
             }
         }
 
-        // Upload gambar & file spesifikasi ke Supabase via base64
-        $gambarUrl = uploadToSupabase('gambar', [
-            'image/jpeg', 'image/png', 'image/webp', 'image/gif'
-        ], 'gambar');
-
-        $fileUrl = uploadToSupabase('file', [
-            'application/pdf',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        ], 'spesifikasi');
+        // Upload gambar dan file ke Supabase (jika ada)
+        $gambarUrl = handleFileUpload('gambar', 'gambar'); // nullable
+        $fileUrl   = handleFileUpload('file', 'file');     // nullable
 
         $stmt = $pdo->prepare("
-            INSERT INTO kendaraan (nama_kendaraan, jenis, merek, plat_nomor, tahun, harga_sewa, status, gambar_url, file_url)
+            INSERT INTO kendaraan (nama_kendaraan, jenis, merek, plat_nomor, tahun, harga_sewa, status, gambar, file)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING *
         ");
@@ -165,6 +133,7 @@ switch ($method) {
 
     // ─────────────────────────────────────────────
     // PUT: Update kendaraan berdasarkan ID
+    //      Mendukung multipart/form-data untuk update gambar/file
     // ─────────────────────────────────────────────
     case 'PUT':
         if (!$id) sendResponse(400, "Parameter ID wajib disertakan");
@@ -177,31 +146,15 @@ switch ($method) {
         }
 
         $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-
         if (strpos($contentType, 'multipart/form-data') !== false) {
             $input = $_POST;
         } else {
-            $input = json_decode(file_get_contents("php://input"), true);
+            $input = json_decode(file_get_contents("php://input"), true) ?? [];
         }
 
-        // Upload file baru jika ada
-        $gambarUrl = uploadToSupabase('gambar', [
-            'image/jpeg', 'image/png', 'image/webp', 'image/gif'
-        ], 'gambar');
-
-        $fileUrl = uploadToSupabase('file', [
-            'application/pdf',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        ], 'spesifikasi');
-
-        // Hapus file lama dari Supabase jika ada file baru
-        if ($gambarUrl && !empty($existing['gambar_url'])) {
-            deleteFromSupabase($existing['gambar_url']);
-        }
-        if ($fileUrl && !empty($existing['file_url'])) {
-            deleteFromSupabase($existing['file_url']);
-        }
+        // Upload file baru jika ada, kalau tidak pakai URL yang sudah ada
+        $gambarUrl = handleFileUpload('gambar', 'gambar') ?? ($input['gambar'] ?? $existing['gambar']);
+        $fileUrl   = handleFileUpload('file', 'file')     ?? ($input['file']   ?? $existing['file']);
 
         $stmt = $pdo->prepare("
             UPDATE kendaraan
@@ -212,8 +165,8 @@ switch ($method) {
                 tahun          = COALESCE(?, tahun),
                 harga_sewa     = COALESCE(?, harga_sewa),
                 status         = COALESCE(?, status),
-                gambar_url     = COALESCE(?, gambar_url),
-                file_url       = COALESCE(?, file_url)
+                gambar         = ?,
+                file           = ?
             WHERE id_kendaraan = ?
             RETURNING *
         ");
@@ -239,16 +192,11 @@ switch ($method) {
     case 'DELETE':
         if (!$id) sendResponse(400, "Parameter ID wajib disertakan");
 
-        $check = $pdo->prepare("SELECT * FROM kendaraan WHERE id_kendaraan = ?");
+        $check = $pdo->prepare("SELECT id_kendaraan FROM kendaraan WHERE id_kendaraan = ?");
         $check->execute([$id]);
-        $existing = $check->fetch();
-        if (!$existing) {
+        if (!$check->fetch()) {
             sendResponse(404, "Kendaraan dengan ID $id tidak ditemukan");
         }
-
-        // Hapus file dari Supabase Storage
-        deleteFromSupabase($existing['gambar_url'] ?? null);
-        deleteFromSupabase($existing['file_url'] ?? null);
 
         $stmt = $pdo->prepare("DELETE FROM kendaraan WHERE id_kendaraan = ?");
         $stmt->execute([$id]);
