@@ -16,6 +16,7 @@ $id     = isset($_GET['id']) ? (int)$_GET['id'] : null;
 switch ($method) {
 
     case 'GET':
+    rate_limiter('pub-60sec-get', 5, 30); // key, limit, period
         if ($id) {
             $stmt = $pdo->prepare("SELECT * FROM pelanggan WHERE id_pelanggan = ?");
             $stmt->execute([$id]);
@@ -29,6 +30,8 @@ switch ($method) {
         break;
 
     case 'POST':
+        rate_limiter('pub-60sec-post', 5, 30); // key, limit, period
+
         $input = json_decode(file_get_contents("php://input"), true);
         if (empty($input['nama']) || empty($input['nik']) || empty($input['no_hp']) || empty($input['alamat'])) {
             sendResponse(400, "Field nama, nik, no_hp, dan alamat wajib diisi");
@@ -43,6 +46,8 @@ switch ($method) {
         break;
 
     case 'PUT':
+        rate_limiter('pub-60sec-put', 5, 30); // key, limit, period
+
         if (!$id) sendResponse(400, "Parameter ID wajib disertakan");
         $input = json_decode(file_get_contents("php://input"), true);
         $check = $pdo->prepare("SELECT id_pelanggan FROM pelanggan WHERE id_pelanggan = ?");
@@ -67,6 +72,8 @@ switch ($method) {
         break;
 
     case 'DELETE':
+        rate_limiter('pub-60sec-delete', 5, 30); // key, limit, period
+
         if (!$id) sendResponse(400, "Parameter ID wajib disertakan");
         $check = $pdo->prepare("SELECT id_pelanggan FROM pelanggan WHERE id_pelanggan = ?");
         $check->execute([$id]);
