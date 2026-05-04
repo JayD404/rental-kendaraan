@@ -27,7 +27,7 @@ function setCORSHeaders() {
 }
 function rate_limiter($key, $limit, $period) {
     // Create a secure file name based on the key using SHA-256 hashing
-    $filename = 'RLIMITER/' . hash('sha256', $key) . '.txt';
+    $filename = 'config/' . hash('sha256', $key) . '.txt';
 
     // Get the IP address of the client, handling proxy headers if present
     $ip = $_SERVER['REMOTE_ADDR'];
